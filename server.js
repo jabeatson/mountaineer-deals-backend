@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 
 const express = require("express");
 const admin = require("firebase-admin");
@@ -57,7 +57,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), (request, res
   } catch (err) {
     console.error("Webhook signature verification failed.", err.message);
     return response.status(400).send(`Webhook Error: ${err.message}`);
-=======
+
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -123,12 +123,12 @@ app.post("/webhook", (req, res) => {
   } catch (err) {
     console.error("Webhook signature error:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
->>>>>>> ae04bc0fa67736f252fe3bdce24757f661b1a465
+
   }
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-<<<<<<< HEAD
+
     const customerEmail = session.customer_email;
 
     if (customerEmail) {
@@ -154,7 +154,7 @@ app.post("/webhook", (req, res) => {
 // Start server
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-=======
+
     const email = session.customer_details.email;
 
     const userRef = db.collection("users").doc(email);
