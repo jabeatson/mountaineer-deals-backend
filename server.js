@@ -17,14 +17,10 @@ const db = admin.firestore();
 // Create Express app
 const app = express();
 
-// Enable CORS for your frontend
-app.use(
-  cors({
-    origin: "https://mountaineer-deals.web.app",
-  })
-);
+// Enable CORS for your frontend origin
+app.use(cors({ origin: "https://mountaineer-deals.web.app" }));
 
-// Use raw body parser for Stripe webhooks, JSON for other routes
+// Parse webhook body as raw, everything else as JSON
 app.use((req, res, next) => {
   if (req.originalUrl === "/webhook") {
     bodyParser.raw({ type: "application/json" })(req, res, next);
@@ -33,17 +29,15 @@ app.use((req, res, next) => {
   }
 });
 
-// Endpoint to create a Stripe Checkout session
+// Create a Stripe Checkout session
 app.post("/create-checkout-session", async (req, res) => {
   const { priceId } = req.body;
-
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url:
-        "https://mountaineer-deals.web.app/secure_qr_verified_autocreate.html",
+      success_url: "https://mountaineer-deals.web.app/secure_qr_verified_autocreate.html",
       cancel_url: "https://mountaineer-deals.web.app/subscribe.html",
     });
     res.json({ id: session.id });
@@ -53,7 +47,7 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-// Stripe webhook endpoint
+// Handle Stripe webhooks
 app.post("/webhook", (req, res) => {
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const sig = req.headers["stripe-signature"];
@@ -69,16 +63,10 @@ app.post("/webhook", (req, res) => {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const email = session.customer_details.email;
-
     if (email) {
-      const userRef = db.collection("users").doc(email);
-      userRef.set(
-        {
-          active: true,
-          subscriptionType: "paid",
-        },
-        { merge: true }
-      );
+      db.collection("users")
+        .doc(email)
+        .set({ active: true, subscriptionType: "paid" }, { merge: true });
       console.log(`Activated subscription for ${email}`);
     }
   }
@@ -86,6 +74,6 @@ app.post("/webhook", (req, res) => {
   res.status(200).send("Received");
 });
 
-// Start the server
+// Start server
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`🚀 Server listening on port ${PORT}`));
